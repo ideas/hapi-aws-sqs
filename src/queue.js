@@ -1,33 +1,32 @@
 'use strict';
 
-// Load external modules
-const AWS = require('aws-sdk');
+// Load internal modules
+const SqsStrategy = require('./strategies/sqs');
+const StubStrategy = require('./strategies/stub');
 
 class Queue {
-  constructor(queues, options) {
+  constructor(queues, options, simulate) {
     this._queues = queues;
 
-    const defaults = {
+    const settings = Object.assign({}, options, {
       apiVersion: '2012-11-05'
-    };
+    });
 
-    this._sqs = new AWS.SQS(Object.assign({}, options, defaults));
+    this._strategy = simulate ? new StubStrategy(settings) : new SqsStrategy(settings);
   }
 
   sendMessage(queue, message, options) {
     return new Promise((resolve, reject) => {
       const params = {
-        MessageBody: typeof message === 'object' ? JSON.stringify(message) : message,
-        QueueUrl: this._queues[queue]
+        QueueUrl: this._queues[queue],
+        MessageBody: typeof message === 'object' ? JSON.stringify(message) : message
       };
 
-      this._sqs.sendMessage(params, (err, data) => {
-        if (err) {
-          return reject(err);
-        }
-
-        resolve({ id: data.MessageId });
-      });
+      this._strategy.sendMessage(params)
+        .then((data) => {
+          resolve({ id: data.MessageId });
+        })
+        .catch(reject);
     });
   }
 }

@@ -1,55 +1,29 @@
 'use strict';
 
 // Load external modules
-const Hapi = require('hapi');
 const Lab = require('lab');
-const MockAWS = require('mock-aws');
 
 // Load internal modules
-const HapiAwsSqs = require('..');
+const Queue = require('../src/queue');
 
 // Test shortcuts
 const lab = exports.lab = Lab.script();
 const expect = Lab.assertions.expect;
 
-lab.after((done) => {
-  MockAWS.restore();
-  done();
-});
-
 lab.describe('Queue', () => {
-  lab.describe('sendMessage()', () => {
-    lab.it('sends a message', (done) => {
-      const server = new Hapi.Server();
+  lab.describe('constructor()', () => {
+    lab.it('instantiates the sqs strategy by default', (done) => {
+      const queue = new Queue();
 
-      const plugin = {
-        register: HapiAwsSqs,
-        options: {
-          queues: {
-            test: 'https://sqs.us-east-1.amazonaws.com/012345678901/test'
-          },
-          options: {
-            region: 'us-east-1',
-            accessKeyId: '01234567890123456789',
-            secretAccessKey: '0123456789012345678901234567890123456789'
-          }
-        }
-      };
+      expect(queue._strategy.constructor.name).to.equal('SqsStrategy');
+      done();
+    });
 
-      server.register(plugin, (err) => {
-        expect(err).to.not.exist();
+    lab.it('instantiates the stub strategy when simulate option is true', (done) => {
+      const queue = new Queue(null, null, true);
 
-        MockAWS.mock('SQS', 'sendMessage', {
-          MessageId: '2c4fc1e3-9598-403c-b4f0-752aa8984800'
-        });
-
-        server.plugins['hapi-aws-sqs'].queue.sendMessage('test', { test: 'aws'})
-          .then((data) => {
-            expect(data.id).to.equal('2c4fc1e3-9598-403c-b4f0-752aa8984800');
-            done();
-          })
-          .catch(done);
-      });
+      expect(queue._strategy.constructor.name).to.equal('StubStrategy');
+      done();
     });
   });
 });
