@@ -23,7 +23,8 @@
   "homepage": "https://github.com/ideas/hapi-aws-sqs#readme",
   "dependencies": {
     "aws-sdk": "2.2.x",
-    "joi": "7.1.x"
+    "joi": "7.1.x",
+    "node-uuid": "1.4.x"
   },
   "devDependencies": {
     "@ideapod/eslint-config": "ideas/eslint-config",
